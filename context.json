@@ -1,0 +1,126 @@
+{
+  "event_types": {
+    "lecture_or_talk": {
+      "description": "A talk, lecture, or presentation the student attended",
+      "typical_experiences": [
+        "Found one specific topic or subtopic within the talk more engaging than the rest",
+        "Had a moment where something the speaker explained clicked a concept into place",
+        "Connected something from the talk to a patient or case seen on placement",
+        "Found a particular comparison, framework, or classification helpful",
+        "Seeing a specialist's perspective vs textbook learning landed differently",
+        "Left with a question they want to look into further"
+      ],
+      "safe_framing": [
+        "One thing that stuck with me was...",
+        "The part on [topic from cert] clicked something for me...",
+        "Seeing how [specific aspect] plays out beyond the textbook...",
+        "The bit that stuck was..."
+      ]
+    },
+    "conference": {
+      "description": "A multi-session conference or symposium",
+      "typical_experiences": [
+        "One talk stood out more than others",
+        "Met other students or professionals with similar interests",
+        "The variety of topics gave a broader perspective on the field",
+        "A case presentation or panel discussion was particularly memorable",
+        "Earned CPD points which felt like a tangible marker of development",
+        "The Q&A sessions added depth beyond the prepared presentations"
+      ],
+      "safe_framing": [
+        "The session on [topic area from cert] stood out for me...",
+        "Hearing it from multiple angles...",
+        "What made this one different was..."
+      ]
+    },
+    "workshop_or_practical": {
+      "description": "Hands-on workshop, skills session, or practical training",
+      "typical_experiences": [
+        "Practised a specific technique and noticed improvement by the end",
+        "Found one aspect harder than expected",
+        "Got feedback from an instructor that was useful",
+        "The hands-on element made a concept click that was abstract in lectures",
+        "Felt more confident in the skill afterwards"
+      ],
+      "safe_framing": [
+        "Getting hands-on practice with...",
+        "The thing I noticed was...",
+        "What surprised me was how..."
+      ]
+    },
+    "volunteering_mock_interviews": {
+      "description": "Volunteering at mock MMIs or interview practice for applicants",
+      "typical_experiences": [
+        "Being on the interviewer side gave a new perspective on the process",
+        "Noticed common patterns in how applicants approached stations",
+        "Reflected on their own MMI experience and how they'd approach it now",
+        "Saw an applicant visibly improve across stations",
+        "Realised how much they've grown since being an applicant themselves",
+        "Gave specific feedback that seemed to land"
+      ],
+      "safe_framing": [
+        "Being on the other side of the MMI table...",
+        "You start noticing patterns in how people approach...",
+        "I kept thinking back to my own interviews and..."
+      ]
+    },
+    "volunteering_outreach": {
+      "description": "Volunteering for outreach, widening participation, or teaching applicants",
+      "typical_experiences": [
+        "Helped applicants with a specific part of the process (personal statements, interview prep, etc.)",
+        "Answered questions that reminded them of their own application anxieties",
+        "Noticed how driven and motivated the applicants were",
+        "Felt good about supporting the pipeline that supported them",
+        "Learned something about teaching or communication through the experience"
+      ],
+      "safe_framing": [
+        "Helping applicants navigate...",
+        "What I didn't expect was...",
+        "It took me back to when I was applying and..."
+      ]
+    },
+    "volunteering_charity": {
+      "description": "Volunteering for a charity or community initiative",
+      "typical_experiences": [
+        "Found the non-clinical side of healthcare meaningful",
+        "Connected with other volunteers over shared motivation",
+        "Did something creative or personal rather than academic for a change",
+        "Thought about the patient experience beyond treatment",
+        "Found it grounding to step outside the academic bubble"
+      ],
+      "safe_framing": [
+        "There's something grounding about doing something hands-on and...",
+        "Stepping outside the clinical side of medicine for a moment...",
+        "Sometimes the smallest gestures..."
+      ]
+    },
+    "hackathon": {
+      "description": "A hackathon, innovation challenge, or collaborative problem-solving event",
+      "typical_experiences": [
+        "Worked intensely with a team under time pressure",
+        "Had to scope down an ambitious idea to something buildable",
+        "Found the interdisciplinary aspect refreshing compared to clinical study",
+        "Presented a solution to judges or other teams",
+        "Learned something about teamwork, rapid prototyping, or pitching"
+      ],
+      "safe_framing": [
+        "Working under that kind of time pressure...",
+        "Our team focused on...",
+        "The challenge of turning an idea into something tangible..."
+      ]
+    },
+    "webinar": {
+      "description": "An online webinar or virtual session",
+      "typical_experiences": [
+        "Convenient to attend remotely, fitted around other commitments",
+        "The Q&A or chat added perspectives from other attendees",
+        "Took notes on one or two key points to revisit later",
+        "The format made it easy to fit into a packed schedule"
+      ],
+      "safe_framing": [
+        "One key point I took away was...",
+        "Hearing [speaker]'s take on..."
+      ]
+    }
+  }
+}
