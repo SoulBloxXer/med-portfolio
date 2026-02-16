@@ -10,11 +10,12 @@
         "Seeing a specialist's perspective vs textbook learning landed differently",
         "Left with a question they want to look into further"
       ],
-      "safe_framing": [
-        "One thing that stuck with me was...",
-        "The part on [topic from cert] clicked something for me...",
-        "Seeing how [specific aspect] plays out beyond the textbook...",
-        "The bit that stuck was..."
+      "thought_seeds": [
+        "What specific part of the content was new vs. what you already knew?",
+        "Was there a moment where something abstract became concrete?",
+        "What's one thing you'd explain differently after hearing this?",
+        "Did any part contradict or complicate what you'd read in textbooks?",
+        "What would you actually tell a coursemate about this talk?"
       ]
     },
     "conference": {
@@ -27,10 +28,12 @@
         "Earned CPD points which felt like a tangible marker of development",
         "The Q&A sessions added depth beyond the prepared presentations"
       ],
-      "safe_framing": [
-        "The session on [topic area from cert] stood out for me...",
-        "Hearing it from multiple angles...",
-        "What made this one different was..."
+      "thought_seeds": [
+        "Which session stuck with you and why that one specifically?",
+        "Did anything challenge the way you'd been thinking about the field?",
+        "What was the gap between what you expected and what you got?",
+        "Was there a question from the audience that changed the discussion?",
+        "What would you look up or read next based on what you heard?"
       ]
     },
     "workshop_or_practical": {
@@ -42,10 +45,12 @@
         "The hands-on element made a concept click that was abstract in lectures",
         "Felt more confident in the skill afterwards"
       ],
-      "safe_framing": [
-        "Getting hands-on practice with...",
-        "The thing I noticed was...",
-        "What surprised me was how..."
+      "thought_seeds": [
+        "What was harder than you expected going in?",
+        "What clicked when you actually did it vs. just reading about it?",
+        "Was there a specific moment where you noticed yourself improving?",
+        "What would you do differently if you repeated the exercise?",
+        "What's the gap between knowing the theory and doing the thing?"
       ]
     },
     "volunteering_mock_interviews": {
@@ -58,10 +63,12 @@
         "Realised how much they've grown since being an applicant themselves",
         "Gave specific feedback that seemed to land"
       ],
-      "safe_framing": [
-        "Being on the other side of the MMI table...",
-        "You start noticing patterns in how people approach...",
-        "I kept thinking back to my own interviews and..."
+      "thought_seeds": [
+        "What surprised you about being on the assessor side vs. being assessed?",
+        "Did you catch yourself wanting to help candidates instead of assess them?",
+        "What patterns did you notice in how people handle the ethical stations?",
+        "How would you approach your own MMI differently knowing what you know now?",
+        "What was the most common thing candidates struggled with?"
       ]
     },
     "volunteering_outreach": {
@@ -73,10 +80,12 @@
         "Felt good about supporting the pipeline that supported them",
         "Learned something about teaching or communication through the experience"
       ],
-      "safe_framing": [
-        "Helping applicants navigate...",
-        "What I didn't expect was...",
-        "It took me back to when I was applying and..."
+      "thought_seeds": [
+        "What questions did applicants ask that you hadn't thought about in a while?",
+        "Did explaining something to an applicant make you understand it differently?",
+        "What do you remember about being in their position?",
+        "What's the most useful thing someone told you when you were applying?",
+        "Was there a moment where you realised how far you've come?"
       ]
     },
     "volunteering_charity": {
@@ -88,10 +97,12 @@
         "Thought about the patient experience beyond treatment",
         "Found it grounding to step outside the academic bubble"
       ],
-      "safe_framing": [
-        "There's something grounding about doing something hands-on and...",
-        "Stepping outside the clinical side of medicine for a moment...",
-        "Sometimes the smallest gestures..."
+      "thought_seeds": [
+        "What was it actually like doing this, practically speaking?",
+        "Did anything about the experience feel different from what you expected?",
+        "What did you notice about the people you were doing this for?",
+        "What's the thing about this that you'd actually remember?",
+        "Was there a moment of uncertainty about what to do or say?"
       ]
     },
     "hackathon": {
@@ -103,10 +114,12 @@
         "Presented a solution to judges or other teams",
         "Learned something about teamwork, rapid prototyping, or pitching"
       ],
-      "safe_framing": [
-        "Working under that kind of time pressure...",
-        "Our team focused on...",
-        "The challenge of turning an idea into something tangible..."
+      "thought_seeds": [
+        "What did your team's original idea look like vs. what you actually built?",
+        "What was the hardest constraint — time, skills, or scope?",
+        "Did working with people from different backgrounds change your approach?",
+        "What would you do differently if you had another day?",
+        "What surprised you about the problem once you dug into it?"
       ]
     },
     "webinar": {
@@ -117,9 +130,11 @@
         "Took notes on one or two key points to revisit later",
         "The format made it easy to fit into a packed schedule"
       ],
-      "safe_framing": [
-        "One key point I took away was...",
-        "Hearing [speaker]'s take on..."
+      "thought_seeds": [
+        "What's the one thing from this you'd actually look up afterwards?",
+        "Did the Q&A or chat surface anything the speaker hadn't covered?",
+        "What part of this was most relevant to where you are in training right now?",
+        "Was there a specific recommendation or resource worth following up on?"
       ]
     }
   }
