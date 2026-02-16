@@ -511,7 +511,7 @@ def generate(cert_path: Path, notes: str | None, tone: str, last_shapes: list[st
     mime_type = get_mime_type(cert_path)
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-2.5-pro",
         config=types.GenerateContentConfig(
             system_instruction=build_system_prompt(),
             temperature=0.7,

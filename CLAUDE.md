@@ -6,7 +6,7 @@ Cert-to-LinkedIn-post generator for a med student. Drop certs in `inbox/`, run `
 - `generate.py` — everything: SYSTEM_PROMPT, LLM calls, file handling, shape cycling, parsing
 - `context.json` — event-type-specific `typical_experiences` and `thought_seeds`
 - `last_shape.txt` — tracks last 4 shapes used (cycling state)
-- `.env` — `GOOGLE_API_KEY` (Gemini 2.5 Flash)
+- `.env` — `GOOGLE_API_KEY` (Gemini 2.5 Pro)
 
 ## How to Audit a Run
 ```bash
@@ -51,4 +51,6 @@ cat last_shape.txt
 
 10. **Categorisation can drift.** Hackathons should be `courses-and-workshops` per the categorisation guidance, but the LLM occasionally puts them in `other`. The guidance says "hackathons" explicitly — if it drifts, check the categorisation section wording.
 
-11. **Diminishing returns are real.** After 3 audit-fix cycles in v5, violations dropped from ~12 to ~3. The remaining leaks (1 banned word, 2 banned closings per batch of 10) are at the noise floor of what prompt engineering can achieve with this model. Further improvement would need post-generation validation code, not more prompt rules.
+11. **Diminishing returns are real.** After 3 audit-fix cycles in v5, violations dropped from ~12 to ~3. The remaining leaks (1 banned word, 2 banned closings per batch of 10) are at the noise floor of what prompt engineering can achieve with Flash.
+
+12. **Model upgrade beats validation code.** When the prompt is mature but the model still ignores instructions ~3 times per batch, the fix is a heavier model (Flash → Pro), not post-generation validation code in Python. The user correctly identified this as overengineering — the prompt already says what to do, you just need a model that listens better.
