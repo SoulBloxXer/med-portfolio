@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Med Portfolio</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #333; line-height: 1.5; }
+        .container { max-width: 960px; margin: 0 auto; padding: 20px; }
+
+        /* Header */
+        header { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid #ddd; margin-bottom: 20px; }
+        header h1 { font-size: 20px; font-weight: 600; }
+        .linkedin-status { font-size: 13px; padding: 6px 12px; border-radius: 6px; text-decoration: none; }
+        .linkedin-status.connected { background: #e8f5e9; color: #2e7d32; }
+        .linkedin-status.disconnected { background: #0077b5; color: white; }
+
+        /* Drop zone */
+        .drop-zone { border: 2px dashed #ccc; border-radius: 8px; padding: 32px; text-align: center; color: #999; font-size: 14px; cursor: pointer; transition: all 0.2s; margin-bottom: 16px; background: white; }
+        .drop-zone.dragover { border-color: #0077b5; background: #e3f2fd; color: #0077b5; }
+        .drop-zone input { display: none; }
+
+        /* Action bar */
+        .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+        .filter-chips { display: flex; gap: 4px; }
+        .chip { padding: 4px 10px; border-radius: 12px; font-size: 12px; border: 1px solid #ddd; background: white; cursor: pointer; transition: all 0.15s; }
+        .chip.active { background: #333; color: white; border-color: #333; }
+        .chip:hover { border-color: #999; }
+        .progress-text { font-size: 13px; color: #666; }
+
+        /* Buttons */
+        button { padding: 6px 14px; border: none; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; transition: opacity 0.2s; }
+        button:hover { opacity: 0.85; }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-primary { background: #0077b5; color: white; }
+        .btn-secondary { background: #e0e0e0; color: #333; }
+        .btn-success { background: #2e7d32; color: white; }
+        .btn-danger { background: #c62828; color: white; font-size: 12px; padding: 4px 8px; }
+        .btn-sm { font-size: 12px; padding: 3px 8px; }
+
+        /* Table */
+        .table-card { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        thead th { text-align: left; padding: 10px 12px; background: #fafafa; font-weight: 600; color: #666; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #eee; }
+        tbody td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background: #fafafa; }
+        .empty-row td { text-align: center; padding: 40px; color: #aaa; font-size: 14px; }
+
+        /* Status chips */
+        .status { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+        .status-uploaded { background: #e3f2fd; color: #1565c0; }
+        .status-generating { background: #fff3e0; color: #e65100; }
+        .status-generated { background: #e8f5e9; color: #2e7d32; }
+        .status-saved { background: #f5f5f5; color: #666; }
+        .status-published { background: #f3e5f5; color: #7b1fa2; }
+
+        /* Category chips */
+        .cat-chip { display: inline-block; font-size: 11px; background: #e3f2fd; color: #1565c0; padding: 1px 6px; border-radius: 3px; }
+
+        /* Char count coloring */
+        .chars-ok { color: #2e7d32; }
+        .chars-warn { color: #e65100; }
+
+        /* Confidence */
+        .conf-high { color: #2e7d32; }
+        .conf-medium { color: #f57f17; }
+        .conf-low { color: #c62828; }
+
+        /* Action buttons in table */
+        .actions { display: flex; gap: 4px; flex-wrap: wrap; }
+        .actions button { font-size: 11px; padding: 2px 6px; }
+
+        /* Spinner */
+        .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #e65100; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Alerts */
+        .alert { padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; }
+        .alert-error { background: #fce4ec; color: #c62828; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; }
+
+        /* Modal */
+        .hidden { display: none !important; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; }
+        .modal { background: white; border-radius: 8px; padding: 24px; max-width: 680px; width: 90%; max-height: 85vh; overflow-y: auto; }
+        .modal h3 { margin-bottom: 4px; font-size: 16px; }
+        .modal .meta-line { font-size: 12px; color: #888; margin-bottom: 16px; }
+        .modal textarea { width: 100%; min-height: 220px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-family: inherit; line-height: 1.6; resize: vertical; }
+        .modal pre { white-space: pre-wrap; font-family: inherit; font-size: 14px; line-height: 1.6; background: #fafafa; padding: 12px; border-radius: 6px; }
+        .modal .char-count { font-size: 12px; text-align: right; margin-top: 4px; margin-bottom: 12px; }
+        .modal .btn-row { display: flex; gap: 8px; margin-top: 16px; }
+
+        /* Notes inline input */
+        .notes-input { width: 100%; padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; font-family: inherit; }
+        .notes-row td { background: #fafafa; padding: 6px 12px !important; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

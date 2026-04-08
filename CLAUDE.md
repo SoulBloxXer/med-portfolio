@@ -1,12 +1,17 @@
 # Med Portfolio — Operational Notes
 
-Cert-to-LinkedIn-post generator for a med student. Drop certs in `inbox/`, run `./go.sh`, get posts in `done/`.
+Cert-to-LinkedIn-post generator for a med student. Two interfaces:
+- **CLI:** Drop certs in `inbox/`, run `./go.sh`, get posts in `done/`
+- **Web UI:** Run `python app.py`, open `http://localhost:5051` — upload, review, edit, post to LinkedIn
 
 ## Key Files
-- `generate.py` — everything: SYSTEM_PROMPT, LLM calls, file handling, shape cycling, parsing
+- `generate.py` — SYSTEM_PROMPT, LLM calls, file handling, shape cycling, parsing (the pipeline)
+- `app.py` — Flask web UI + LinkedIn OAuth + posting API. Imports `generate()` directly from `generate.py`
+- `templates/` — `base.html` (layout) + `index.html` (single-page UI)
 - `context.json` — event-type-specific `typical_experiences` and `thought_seeds`
 - `last_shape.txt` — tracks last 4 shapes used (cycling state)
-- `.env` — `GOOGLE_API_KEY` (Gemini 2.5 Pro)
+- `.env` — `GOOGLE_API_KEY` (Gemini 2.5 Pro), `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET`
+- `linkedin_token.json` — auto-generated OAuth token (gitignored, expires every 60 days)
 
 ## How to Audit a Run
 ```bash

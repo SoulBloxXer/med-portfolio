@@ -1,0 +1,489 @@
+{% extends "base.html" %}
+{% block content %}
+
+<header>
+    <h1>Med Portfolio</h1>
+    <a href="/linkedin/auth" class="linkedin-status {{ 'connected' if linkedin_connected else 'disconnected' }}" id="linkedinBtn">
+        {{ 'LinkedIn Connected' if linkedin_connected else 'Connect LinkedIn' }}
+    </a>
+</header>
+
+{% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+{% if success %}<div class="alert alert-success">{{ success }}</div>{% endif %}
+<div class="hidden" id="alertBox"><div class="alert" id="alertMsg"></div></div>
+
+<!-- Drop Zone -->
+<div class="drop-zone" id="dropZone">
+    Drop certificates here (PDF, PNG, JPG) or click to browse
+    <input type="file" id="fileInput" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.heic,.heif">
+</div>
+
+<!-- Action Bar -->
+<div class="action-bar">
+    <div class="filter-chips">
+        <span class="chip active" data-filter="all">All</span>
+        <span class="chip" data-filter="uploaded">Uploaded</span>
+        <span class="chip" data-filter="generated">Generated</span>
+        <span class="chip" data-filter="saved">Saved</span>
+        <span class="chip" data-filter="published">Published</span>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+        <span class="progress-text hidden" id="progressText"></span>
+        <button class="btn-primary hidden" id="generateAllBtn">Generate All</button>
+    </div>
+</div>
+
+<!-- Dashboard Table -->
+<div class="table-card">
+    <table>
+        <thead>
+            <tr>
+                <th>Status</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Chars</th>
+                <th>Confidence</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            <tr class="empty-row"><td colspan="6">Loading...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- View/Edit Modal -->
+<div class="modal-overlay hidden" id="modal" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+        <h3 id="modalTitle"></h3>
+        <div class="meta-line" id="modalMeta"></div>
+        <div id="modalViewContent">
+            <pre id="modalBody"></pre>
+        </div>
+        <div id="modalEditContent" class="hidden">
+            <textarea id="modalEditor"></textarea>
+            <div class="char-count" id="modalCharCount"></div>
+        </div>
+        <div class="btn-row" id="modalActions"></div>
+    </div>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────
+let allCerts = [];
+let activeFilter = 'all';
+let linkedinConnected = {{ 'true' if linkedin_connected else 'false' }};
+let pollingInterval = null;
+let expandedNotes = null; // cert_id of expanded notes row
+
+// ─── Init ────────────────────────────────────────────────────────────
+checkLinkedIn();
+loadCerts();
+
+// ─── Drop Zone ───────────────────────────────────────────────────────
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    uploadFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) uploadFiles(fileInput.files);
+    fileInput.value = '';
+});
+
+async function uploadFiles(files) {
+    const formData = new FormData();
+    for (const f of files) formData.append('certs', f);
+
+    try {
+        const resp = await fetch('/upload', { method: 'POST', body: formData });
+        const data = await resp.json();
+        if (data.rejected && data.rejected.length) {
+            showAlert(`Skipped unsupported: ${data.rejected.join(', ')}`, true);
+        }
+        if (data.uploaded && data.uploaded.length) {
+            showAlert(`Uploaded ${data.uploaded.length} certificate(s)`, false);
+        }
+        loadCerts();
+    } catch (err) {
+        showAlert('Upload failed: ' + err.message, true);
+    }
+}
+
+// ─── Filter Chips ────────────────────────────────────────────────────
+document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        activeFilter = chip.dataset.filter;
+        renderTable();
+    });
+});
+
+// ─── Generate All ────────────────────────────────────────────────────
+document.getElementById('generateAllBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('generateAllBtn');
+    btn.disabled = true;
+    try {
+        const resp = await fetch('/generate-all', { method: 'POST' });
+        const data = await resp.json();
+        if (data.error) { showAlert(data.error, true); return; }
+        startPolling();
+    } catch (err) {
+        showAlert('Generation failed: ' + err.message, true);
+    } finally {
+        btn.disabled = false;
+    }
+});
+
+// ─── Load & Render ───────────────────────────────────────────────────
+async function loadCerts() {
+    try {
+        const resp = await fetch('/certs');
+        const data = await resp.json();
+        allCerts = data.certs || [];
+
+        // Update generation progress
+        if (data.generation && data.generation.running) {
+            document.getElementById('progressText').textContent =
+                `Generating ${data.generation.current} of ${data.generation.total}...`;
+            document.getElementById('progressText').classList.remove('hidden');
+            if (!pollingInterval) startPolling();
+        } else {
+            document.getElementById('progressText').classList.add('hidden');
+            stopPolling();
+        }
+
+        renderTable();
+    } catch (err) {
+        document.getElementById('tableBody').innerHTML =
+            '<tr class="empty-row"><td colspan="6">Failed to load.</td></tr>';
+    }
+}
+
+function renderTable() {
+    const tbody = document.getElementById('tableBody');
+    const filtered = activeFilter === 'all'
+        ? allCerts
+        : allCerts.filter(c => c.status === activeFilter);
+
+    // Show/hide Generate All button
+    const hasUploaded = allCerts.some(c => c.status === 'uploaded');
+    document.getElementById('generateAllBtn').classList.toggle('hidden', !hasUploaded);
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="6">No certificates yet. Drop some above to get started.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(c => {
+        const name = c.short_name || c.original_filename || c.cert_id;
+        const status = c.status === 'generating'
+            ? `<span class="status status-generating"><span class="spinner"></span></span>`
+            : `<span class="status status-${c.status}">${c.status}</span>`;
+        const category = c.category ? `<span class="cat-chip">${c.category}</span>` : '—';
+        const chars = c.char_count
+            ? `<span class="${c.char_count >= 800 && c.char_count <= 1300 ? 'chars-ok' : 'chars-warn'}">${c.char_count}</span>`
+            : '—';
+        let conf = '—';
+        if (c.confidence === 'low') {
+            const reason = c.flag_reason ? ` — ${esc(c.flag_reason)}` : '';
+            conf = `<span class="conf-low" title="${esc(c.flag_reason || '')}">&#9888; low${reason}</span>`;
+        } else if (c.confidence) {
+            conf = `<span class="conf-${c.confidence}">${c.confidence}</span>`;
+        } else if (c.status === 'saved' || c.status === 'published') {
+            conf = `<span class="conf-high">reviewed</span>`;
+        }
+        const actions = buildActions(c);
+
+        return `<tr data-id="${c.cert_id}">
+            <td>${status}</td>
+            <td>${esc(name)}</td>
+            <td>${category}</td>
+            <td>${chars}</td>
+            <td>${conf}</td>
+            <td><div class="actions">${actions}</div></td>
+        </tr>` + (c.status === 'uploaded' || (c.status === 'generated' && c.confidence === 'low') ? buildNotesRow(c) : '');
+    }).join('');
+
+    // Attach action handlers
+    tbody.querySelectorAll('[data-action]').forEach(btn => {
+        btn.addEventListener('click', e => {
+            e.stopPropagation();
+            const id = btn.dataset.id;
+            const action = btn.dataset.action;
+            const cert = allCerts.find(c => c.cert_id === id);
+            if (!cert) return;
+
+            if (action === 'view') openModal(cert, false);
+            else if (action === 'edit') openModal(cert, true);
+            else if (action === 'generate') generateOne(id);
+            else if (action === 'regenerate') regenerate(id);
+            else if (action === 'save') saveCert(id);
+            else if (action === 'publish') publishCert(id);
+            else if (action === 'delete') deleteCert(id);
+            else if (action === 'notes') toggleNotes(id);
+        });
+    });
+
+    // Attach notes save handlers
+    tbody.querySelectorAll('.notes-save').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            const input = document.querySelector(`.notes-input[data-id="${id}"]`);
+            if (input) saveNotes(id, input.value);
+        });
+    });
+}
+
+function buildActions(c) {
+    const id = c.cert_id;
+    let btns = '';
+
+    if (c.status === 'uploaded') {
+        btns += `<button class="btn-sm btn-secondary" data-action="notes" data-id="${id}">Notes</button>`;
+        btns += `<button class="btn-sm btn-primary" data-action="generate" data-id="${id}">Generate</button>`;
+        btns += `<button class="btn-sm btn-danger" data-action="delete" data-id="${id}">Del</button>`;
+    } else if (c.status === 'generating') {
+        // No actions during generation
+    } else if (c.status === 'generated') {
+        btns += `<button class="btn-sm btn-secondary" data-action="view" data-id="${id}">View</button>`;
+        btns += `<button class="btn-sm btn-secondary" data-action="edit" data-id="${id}">Edit</button>`;
+        if (c.confidence === 'low') {
+            btns += `<button class="btn-sm btn-secondary" data-action="notes" data-id="${id}">+ Notes</button>`;
+            btns += `<button class="btn-sm btn-primary" data-action="regenerate" data-id="${id}">Redo</button>`;
+        } else {
+            btns += `<button class="btn-sm btn-success" data-action="save" data-id="${id}">Save</button>`;
+            if (linkedinConnected) btns += `<button class="btn-sm btn-primary" data-action="publish" data-id="${id}">Publish</button>`;
+            btns += `<button class="btn-sm btn-secondary" data-action="regenerate" data-id="${id}">Redo</button>`;
+        }
+    } else if (c.status === 'saved') {
+        btns += `<button class="btn-sm btn-secondary" data-action="view" data-id="${id}">View</button>`;
+        btns += `<button class="btn-sm btn-secondary" data-action="edit" data-id="${id}">Edit</button>`;
+        if (linkedinConnected) btns += `<button class="btn-sm btn-primary" data-action="publish" data-id="${id}">Publish</button>`;
+    } else if (c.status === 'published') {
+        btns += `<button class="btn-sm btn-secondary" data-action="view" data-id="${id}">View</button>`;
+    }
+
+    return btns;
+}
+
+function buildNotesRow(c) {
+    if (expandedNotes !== c.cert_id) return '';
+    const notes = c.notes || '';
+    return `<tr class="notes-row"><td colspan="6">
+        <div style="display:flex;gap:6px;align-items:center;">
+            <input type="text" class="notes-input" data-id="${c.cert_id}" value="${esc(notes)}" placeholder="Quick notes or context...">
+            <button class="btn-sm btn-secondary notes-save" data-id="${c.cert_id}">Save</button>
+        </div>
+    </td></tr>`;
+}
+
+// ─── Actions ─────────────────────────────────────────────────────────
+async function generateOne(id) {
+    try {
+        const resp = await fetch(`/cert/${id}/generate`, { method: 'POST' });
+        const data = await resp.json();
+        if (data.error) showAlert(data.error, true);
+        loadCerts();
+    } catch (err) {
+        showAlert('Generation failed: ' + err.message, true);
+    }
+}
+
+async function regenerate(id) {
+    if (!confirm('Regenerate this post? The current text will be lost.')) return;
+    try {
+        await fetch(`/cert/${id}/regenerate`, { method: 'POST' });
+        loadCerts();
+    } catch (err) {
+        showAlert('Regenerate failed: ' + err.message, true);
+    }
+}
+
+async function saveCert(id) {
+    try {
+        const resp = await fetch(`/cert/${id}/save`, { method: 'POST' });
+        const data = await resp.json();
+        if (data.error) showAlert(data.error, true);
+        else showAlert('Saved!', false);
+        loadCerts();
+    } catch (err) {
+        showAlert('Save failed: ' + err.message, true);
+    }
+}
+
+async function publishCert(id) {
+    if (!confirm('Post this to LinkedIn?')) return;
+    try {
+        const resp = await fetch(`/cert/${id}/publish`, { method: 'POST' });
+        const data = await resp.json();
+        if (data.error) showAlert(data.error, true);
+        else showAlert('Posted to LinkedIn!', false);
+        loadCerts();
+    } catch (err) {
+        showAlert('Publish failed: ' + err.message, true);
+    }
+}
+
+async function deleteCert(id) {
+    if (!confirm('Delete this certificate?')) return;
+    try {
+        await fetch(`/cert/${id}`, { method: 'DELETE' });
+        loadCerts();
+    } catch (err) {
+        showAlert('Delete failed: ' + err.message, true);
+    }
+}
+
+function toggleNotes(id) {
+    expandedNotes = expandedNotes === id ? null : id;
+    renderTable();
+}
+
+async function saveNotes(id, notes) {
+    try {
+        await fetch(`/cert/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notes: notes }),
+        });
+        const cert = allCerts.find(c => c.cert_id === id);
+        if (cert) cert.notes = notes;
+        showAlert('Notes saved', false);
+    } catch (err) {
+        showAlert('Failed to save notes', true);
+    }
+}
+
+// ─── Modal ───────────────────────────────────────────────────────────
+function openModal(cert, editMode) {
+    document.getElementById('modalTitle').textContent =
+        cert.short_name || cert.original_filename || cert.cert_id;
+
+    const metaParts = [];
+    if (cert.category) metaParts.push(cert.category);
+    if (cert.shape_used) metaParts.push(cert.shape_used);
+    if (cert.confidence) metaParts.push('confidence: ' + cert.confidence);
+    document.getElementById('modalMeta').textContent = metaParts.join(' | ');
+
+    const viewDiv = document.getElementById('modalViewContent');
+    const editDiv = document.getElementById('modalEditContent');
+    const body = document.getElementById('modalBody');
+    const editor = document.getElementById('modalEditor');
+    const charCount = document.getElementById('modalCharCount');
+    const actionsDiv = document.getElementById('modalActions');
+
+    if (editMode) {
+        viewDiv.classList.add('hidden');
+        editDiv.classList.remove('hidden');
+        editor.value = cert.post_text || '';
+        updateModalCharCount();
+        editor.oninput = updateModalCharCount;
+
+        actionsDiv.innerHTML = `
+            <button class="btn-success" id="modalSaveBtn">Save Changes</button>
+            <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+        `;
+        document.getElementById('modalSaveBtn').addEventListener('click', async () => {
+            const newText = editor.value;
+            try {
+                await fetch(`/cert/${cert.cert_id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ post_text: newText }),
+                });
+                showAlert('Changes saved', false);
+                closeModal();
+                loadCerts();
+            } catch (err) {
+                showAlert('Save failed', true);
+            }
+        });
+    } else {
+        viewDiv.classList.remove('hidden');
+        editDiv.classList.add('hidden');
+        body.textContent = cert.post_text || '(no post generated)';
+
+        let btns = `<button class="btn-secondary" onclick="closeModal()">Close</button>`;
+        if (cert.status === 'generated' || cert.status === 'saved') {
+            btns = `<button class="btn-secondary" id="modalEditBtn">Edit</button>` + btns;
+        }
+        actionsDiv.innerHTML = btns;
+
+        const editBtn = document.getElementById('modalEditBtn');
+        if (editBtn) {
+            editBtn.addEventListener('click', () => {
+                closeModal();
+                openModal(cert, true);
+            });
+        }
+    }
+
+    document.getElementById('modal').classList.remove('hidden');
+}
+
+function updateModalCharCount() {
+    const len = document.getElementById('modalEditor').value.length;
+    const el = document.getElementById('modalCharCount');
+    el.textContent = `${len} chars`;
+    el.className = 'char-count ' + (len >= 800 && len <= 1300 ? 'chars-ok' : 'chars-warn');
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.add('hidden');
+}
+
+// ─── Polling ─────────────────────────────────────────────────────────
+function startPolling() {
+    if (pollingInterval) return;
+    pollingInterval = setInterval(loadCerts, 2000);
+}
+
+function stopPolling() {
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+    }
+}
+
+// ─── LinkedIn Status ─────────────────────────────────────────────────
+async function checkLinkedIn() {
+    try {
+        const resp = await fetch('/linkedin/status');
+        const data = await resp.json();
+        const btn = document.getElementById('linkedinBtn');
+        if (data.connected) {
+            linkedinConnected = true;
+            btn.textContent = `LinkedIn: ${data.name} (${data.days_left}d)`;
+            btn.className = 'linkedin-status connected';
+            btn.href = '#';
+            btn.onclick = e => e.preventDefault();
+        }
+    } catch (e) {}
+}
+
+// ─── Utilities ───────────────────────────────────────────────────────
+function showAlert(msg, isError) {
+    const box = document.getElementById('alertBox');
+    const el = document.getElementById('alertMsg');
+    el.textContent = msg;
+    el.className = 'alert ' + (isError ? 'alert-error' : 'alert-success');
+    box.classList.remove('hidden');
+    setTimeout(() => box.classList.add('hidden'), 3000);
+}
+
+function esc(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+}
+</script>
+
+{% endblock %}
