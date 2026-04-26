@@ -1,3 +1,6 @@
 google-genai
 flask
 requests
+pyautogui
+opencv-python
+pillow
